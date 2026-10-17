@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-2026 GLaDOS 自动签到 (Server酱Turbo推送美化版)
+2026 GLaDOS 自动签到 (Server酱Turbo 修复时区+排版版)
 功能：
 - 全自动签到
 - 精准获取当前积分 (Points)
-- Server酱Turbo微信推送，美化Markdown排版
+- Server酱Turbo微信推送，Markdown硬换行，分行显示
+- 时区修正：UTC → 北京时间+8小时
 - 智能多域名切换 (优先 glados.cloud)
 - 支持 Cookie-Editor 导出格式
 """
@@ -14,7 +15,7 @@ import json
 import os
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Fix Windows Unicode Output
 if sys.platform.startswith('win'):
@@ -35,7 +36,9 @@ HEADERS = {
 
 # ================= 工具函数 =================
 def log(msg):
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # 打印日志也转为北京时间
+    bj_time = datetime.now() + timedelta(hours=8)
+    ts = bj_time.strftime("%Y-%m-%d %H:%M:%S")
     print(f"[{ts}] {msg}")
 
 # ========== Server酱Turbo推送函数 ==========
@@ -150,7 +153,7 @@ class GLaDOS:
                     change = '+' + change
                 self.points_change = change
 
-            # 兑换计划
+            # 兑换计划，同样硬换行
             plans = res.get('plans', {})
             pts = int(self.points)
             exchange_lines = []
@@ -158,9 +161,9 @@ class GLaDOS:
                 need = plan_data['points']
                 days = plan_data['days']
                 if pts >= need:
-                    exchange_lines.append(f"✅ {need}分→{days}天 (可兑换)")
+                    exchange_lines.append(f"✅ {need}分→{days}天 (可兑换)  ")
                 else:
-                    exchange_lines.append(f"❌ {need}分→{days}天 (差{need-pts}分)")
+                    exchange_lines.append(f"❌ {need}分→{days}天 (差{need-pts}分)  ")
             self.exchange_info = "\n".join(exchange_lines)
             return True
         return False
@@ -195,15 +198,15 @@ def main():
         if "Checkin" in msg:
             success_cnt += 1
 
-        # 4. Markdown美化排版
-        results.append(f"""
-📧 账号：{g.email}
-💰 当前积分：{g.points} {g.points_change}
-⏱️ 剩余天数：{g.left_days} 天
-✅ 签到结果：{msg}
-💱 兑换信息：
+        # 重点！每行末尾加两个空格，Server酱Markdown硬换行
+        block = f"""📧 账号：{g.email}  
+💰 当前积分：{g.points} {g.points_change}  
+⏱️ 剩余天数：{g.left_days} 天  
+✅ 签到结果：{msg}  
+💱 兑换信息：  
 {g.exchange_info}
-""")
+"""
+        results.append(block)
 
     # ====== 调用Server酱推送 ======
     sckey = os.environ.get("SERVERCHAN_KEY")
@@ -212,7 +215,9 @@ def main():
         content = ""
         for res_text in results:
             content += res_text + "\n"
-        content += f"\n🕒 执行时间：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        # 北京时间
+        bj_now = datetime.now() + timedelta(hours=8)
+        content += f"🕒 执行时间：{bj_now.strftime('%Y-%m-%d %H:%M:%S')}"
         serverchan_send(sckey, title, content)
 
 if __name__ == '__main__':
