@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 2026 GLaDOS 自动签到 (Server酱Turbo 修复时区+排版版｜多账号增强)
+【修改：兼容纯gld:sess新版cookie，保留原有全部功能】
 功能：
 - 多账号批量全自动签到
 - 精准获取当前积分 (Points)
@@ -10,6 +11,7 @@
 - 智能多域名切换 (优先 glados.cloud)
 - 支持 Cookie-Editor 导出格式
 - 多Cookie：GLADOS_COOKIE内多个cookie【换行分隔】
+- 同时支持：老会话(koa+sess全套) / 新会话(仅gld:sess两条)
 """
 import requests
 import json
@@ -55,11 +57,15 @@ def serverchan_send(sendkey, title, desp):
             log(f"❌ Server酱推送失败：{ret}")
     except Exception as e:
         log(f"❌ Server酱请求异常: {e}")
+
 def extract_cookie(raw: str):
-    """提取 Cookie，支持 Cookie-Editor 冒号格式"""
+    """【修改】兼容两种cookie：带koa / 只有gld:sess"""
     if not raw: return None
     raw = raw.strip()
-    # Cookie-Editor 格式 (koa:sess=xxx; koa:sess.sig=yyy)
+    # 新版：只有 gld:sess + gld:sess.sig
+    if 'gld:sess=' in raw and 'gld:sess.sig=' in raw:
+        return raw
+    # 老版本：包含koa:sess的会话
     if 'koa:sess=' in raw or 'koa:sess.sig=' in raw:
         return raw
     # JSON
@@ -72,6 +78,7 @@ def extract_cookie(raw: str):
         return 'koa:sess=' + raw
     # Standard
     return raw
+
 def get_cookies():
     raw = os.environ.get("GLADOS_COOKIE", "")
     if not raw:
