@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 2026 GLaDOS 自动签到 (Server酱Turbo 修复时区+排版版｜多账号增强)
-【GitHub专用：11:00触发，随机1800~3600秒延时，11:30~12:00签到窗口】
+【GitHub专用：12:30触发，随机0~1800秒延时，12:30~13:00签到窗口】
 功能：
 - 多账号批量全自动签到
 - 精准获取当前积分 (Points)
@@ -162,10 +162,15 @@ class GLaDOS:
         return self.req('POST', '/api/user/checkin', {'token': 'glados.cloud'})
 # ================= 主程序 =================
 def main():
-    # ========= GitHub随机延时 1800~3600秒(30~60分钟) 11:30-12:00签到窗口 =========
-    delay = random.randint(1800, 3600)
-    log(f"⏳ 随机延时 {delay} 秒，等待签到...")
-    time.sleep(delay)
+    # ========= GitHub随机延时 0~1800秒(0~30分钟) 12:30-13:00签到窗口 =========
+    delay = random.randint(0, 1800)
+    log(f"⏳ 总共需要延时 {delay} 秒，等待签到...")
+    remain = delay
+    while remain > 0:
+        step = min(60, remain)
+        time.sleep(step)
+        remain -= step
+        log(f"⏳ 等待中，还剩 {remain} 秒开始签到")
     # ================================================
     log("🚀 2026 GLaDOS Checkin Starting...")
     cookies = get_cookies()
