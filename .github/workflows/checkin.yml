@@ -1,16 +1,13 @@
 name: GLaDOS 2026 Checkin
 on:
   schedule:
-    # 北京时间11:00 对应 UTC 03:00
-    - cron: '0 3 * * *'
+    # 北京时间12:30 对应 UTC 04:30
+    - cron: '30 4 * * *'
   workflow_dispatch:  # 允许手动点按钮测试
-  # push:
-  #   branches: [main]  # 注释，保存代码不会自动跑签到
-  # repository_dispatch: # 删掉，不再用cronjob远程触发
 jobs:
   checkin:
     runs-on: ubuntu-latest
-    timeout-minutes: 65
+    timeout-minutes: 40
     env:
       GLADOS_COOKIE: ${{ secrets.GLADOS_COOKIE }}
       SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
@@ -26,7 +23,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run Checkin
         run: python checkin.py
-        timeout-minutes: 62
+        timeout-minutes: 37
       - name: Retry on Failure
         if: failure()
         run: |
